@@ -16,6 +16,10 @@ include macros.asm
     calcNum1 dw 0d;
     calcNum2 dw 0d;
     calcResult dw 0d;
+    calcType db 0;
+    calcCount db 0;
+    number_str_calc1 db 100 dup(' '),'$'
+    number_str_calc2 db 100 dup(' '),'$'
     ; ================ MENU PRINCIPAL ==================================
     msgM0 db 10,13,7, "=================================","$"
     msgM1 db 10,13,7, "=========== MAIN MENU ===========","$" ; Titulo del menu
@@ -48,6 +52,12 @@ include macros.asm
     msgC9 db 10,13,7, "== Primera Practica                   ==","$"
     msgM10 db 10,13,7, "========================================","$"
 
+    ; ================ MENU CALCULADORA ==================================
+    msgCalc db 10,13,7, "============ CALCULATOR MODE ============","$"
+    msgCalc1 db 10,13,7, ">> Ingrese un Numero, format: 00","$"
+    msgCalc2 db 10,13,7, ">> Ingrese un operado o ';' para finalizar","$"
+    msgCalc3 db 10,13,7, ">> Resultado: ","$"
+    msgCalc4 db 10,13,7, ">> Simbolo Invalido :c ","$"
 
 
 
@@ -124,9 +134,7 @@ loadFile:
 
 ; =========== OPCION NO.2 "MODO CALCULADORA" ===========
 calculatorMode:
-    mClearSC
-
-    mBackMainMenu
+    mCalculator
 .exit
 ; =========== OPCION NO.3 "FACTORIAL" ===========
 factorialMode:
