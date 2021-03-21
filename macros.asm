@@ -173,14 +173,51 @@ endm
 
 
 mCalculator macro
-    local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv
+    local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle
     mClearSC
     mPrint msgCalc
     ; ========== CICLO PARARA ESCOGER LA OPCION =============
     operationCycle:
+
+        cmp calcCount,0
+        je movCycle
+
+        mPrint msgCalc2; mostrar mensaje de ingrese +,-...
+        mPrint msgOpcion; Mostrar >>
+        ; =========== CAPTURA DE UN CARACTER =========== 
+        mov ah,01h ; instruccion para guardar un carecter
+        int 21h
+        mov calcType,al; +,-,*,/,;
+
+        ; =========== COMPARAR SALIDA ";" =========== 
+        cmp calcType,59; ";" = ascci 59, Para finalizar 
+        je operationExit
+
+        ; =========== COMPARAR SUMA "+" =========== 
+        cmp calcType,43; "+" = ascci 43 
+        je operationSum
+        ; =========== COMPARAR RESTA "-" =========== 
+        cmp calcType,45; "-" = ascci 45 
+        je operationSub
+        ; =========== COMPARAR MULTI "*" =========== 
+        cmp calcType,42; "*" = ascci 42 
+        je operationMul
+        ; =========== COMPARAR DIVISION "/" =========== 
+        cmp calcType,47; "/" = ascci 47
+        je operationDiv
+
+
+        mPrint msgCalc4; Mensaje de simbolo invalido
+        
+
+
+        ;inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
+    
+    movCycle:
         mPrint msgCalc1 ; mostrar mensaje de ingrese Numero
         mSaveCalcNum1; Guardar el primer numero
-        mPrint msgCalc2; mostrar mensaje de ingrese +,-...
+        mPrint msgCalc6; mostrar mensaje de ingrese operacion +,-...
         mPrint msgOpcion; Mostrar >>
         ; =========== CAPTURA DE UN CARACTER =========== 
         mov ah,01h ; instruccion para guardar un carecter
@@ -214,25 +251,45 @@ mCalculator macro
 
     ; ======= OPERACIÓN SUMA ==============
     operationSum:
-        mPrint msgCalc1
-        mSaveCalcNum2
+
+        cmp calcCount,0
+        je movRegisterSum
+
+        mPrint msgCalc1 ; mostrar mensaje de ingrese Numero
+        mSaveCalcNum1; Guardar el primer numero
+
+        mov ax,calcNum1
+        add ax,calcResult
+        
+
+        ;add ax,calcResult
+        mov calcResult,ax
+
+
+        mov calcNum1,0d
+        mov calcNum2,0d
+
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
+
+    movRegisterSum:
+        mPrint msgCalc5; Mostrar Ingrese operador
+        mSaveCalcNum2; Guardar el valor del numero2
 
         mov ax,calcNum1
         add ax,calcNum2
-        ;mov calcResult,ax
+        
 
         add ax,calcResult
         mov calcResult,ax
 
-        ;mov ax,calcResult
-        ;intToString buffer_num
-        ;mPrint msgCalc3
-        ;mPrint buffer_num
-        ;xor ax
+
         mov calcNum1,0d
         mov calcNum2,0d
 
+        inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
+
     ; ======= OPERACIÓN RESTA ==============
     operationSub:
         mPrint msgCalc1
@@ -248,6 +305,7 @@ mCalculator macro
         mov calcNum1,0d
         mov calcNum2,0d
 
+        inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
     ; ======= OPERACIÓN MULTI ==============
     operationMul:
@@ -265,6 +323,7 @@ mCalculator macro
         mov calcNum1,0d
         mov calcNum2,0d
 
+        inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
     ; ======= OPERACIÓN DIVI. ==============
     operationDiv:
@@ -277,6 +336,7 @@ mCalculator macro
         mPrint msgCalc3
         mPrint buffer_num
         mov calcResult,0d
+        mov calcCount,0d
         mBackMainMenu
 
 

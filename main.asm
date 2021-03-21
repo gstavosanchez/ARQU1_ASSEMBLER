@@ -58,7 +58,8 @@ include macros.asm
     msgCalc2 db 10,13,7, ">> Ingrese un operado o ';' para finalizar","$"
     msgCalc3 db 10,13,7, ">> Resultado: ","$"
     msgCalc4 db 10,13,7, ">> Simbolo Invalido :c ","$"
-
+    msgCalc5 db 10,13,7, ">> Ingrese su 2do Numero, format: 00","$"
+    msgCalc6 db 10,13,7, ">> Ingrese un operado","$"
 
 
 
