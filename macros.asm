@@ -173,7 +173,8 @@ endm
 
 
 mCalculator macro
-    local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle
+    local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle,movRegisterSub
+    local movRegisterMul
     mClearSC
     mPrint msgCalc
     ; ========== CICLO PARARA ESCOGER LA OPCION =============
@@ -289,10 +290,30 @@ mCalculator macro
 
         inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
-
     ; ======= OPERACIÓN RESTA ==============
     operationSub:
-        mPrint msgCalc1
+        cmp calcCount,0
+        je movRegisterSub
+
+
+        mPrint msgCalc1 ; mostrar mensaje de ingrese Numero
+        mSaveCalcNum1; Guardar el primer numero
+
+
+
+        mov ax,calcResult
+        sub ax,calcNum1
+        ;add ax,calcResult
+        mov calcResult,ax
+
+        ;xor ax
+        mov calcNum1,0d
+        mov calcNum2,0d
+
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
+    movRegisterSub:
+        mPrint msgCalc5; Mostrar Ingrese operador
         mSaveCalcNum2
 
         mov ax,calcNum1
