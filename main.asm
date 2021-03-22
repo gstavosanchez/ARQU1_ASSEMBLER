@@ -60,6 +60,8 @@ include macros.asm
     msgCalc4 db 10,13,7, ">> Simbolo Invalido :c ","$"
     msgCalc5 db 10,13,7, ">> Ingrese su 2do Numero, format: 00","$"
     msgCalc6 db 10,13,7, ">> Ingrese un operado","$"
+    msgCalc7 db 10,13,7, ">> Ingreo a la division","$"
+
 
 
 
@@ -163,6 +165,7 @@ factorialMode:
 
     mov ax,factResult
     intToString buffer_num
+    mPrint msgCalc3 
     mPrint buffer_num
     mov factResult,1d
     mBackMainMenu

@@ -174,7 +174,7 @@ endm
 
 mCalculator macro
     local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle,movRegisterSub
-    local movRegisterMul
+    local movRegisterMul,movRegisterDiv
     mClearSC
     mPrint msgCalc
     ; ========== CICLO PARARA ESCOGER LA OPCION =============
@@ -330,7 +330,29 @@ mCalculator macro
     jmp operationCycle
     ; ======= OPERACIÓN MULTI ==============
     operationMul:
-        mPrint msgCalc1
+        cmp calcCount,0
+        je movRegisterMul
+
+
+        mPrint msgCalc1 ; mostrar mensaje de ingrese Numero
+        mSaveCalcNum1; Guardar el primer numero
+
+
+        mov ax,calcResult; ax = 5
+        mov bx,calcNum1; bx = 10
+        mul bx; ax = ax * bx
+
+        ;add ax,calcResult
+        mov calcResult,ax
+
+        ;xor ax
+        mov calcNum1,0d
+        mov calcNum2,0d
+
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
+    movRegisterMul:
+        mPrint msgCalc5; Mostrar Ingrese operador
         mSaveCalcNum2
 
         mov ax,calcNum1; ax = 5
@@ -348,8 +370,51 @@ mCalculator macro
     jmp operationCycle
     ; ======= OPERACIÓN DIVI. ==============
     operationDiv:
-    jmp operationCycle
+        cmp calcCount,0
+        je movRegisterDiv
 
+        mPrint msgCalc1 ; mostrar mensaje de ingrese Numero
+        mSaveCalcNum1; Guardar el primer numero
+
+        xor ax,ax
+        xor bx,bx
+        xor dx,dx
+        mov ax,calcResult; ax = 10
+        mov bx,calcNum1; bx = 2
+        div bx; ax = ax / bx
+
+        ;add ax,calcResult
+        mov calcResult,ax
+
+        ;xor ax
+        mov calcNum1,0d
+        mov calcNum2,0d
+
+
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
+    movRegisterDiv:
+        ;mPrint msgCalc7
+        mPrint msgCalc5; Mostrar Ingrese operador
+        mSaveCalcNum2
+
+        xor ax,ax
+        xor bx,bx
+        xor dx,dx
+        mov ax,calcNum1; ax = 10
+        mov bx,calcNum2; bx = 2
+        div bx; ax = ax / bx
+        
+
+        add ax,calcResult
+        mov calcResult,ax
+
+        ;xor ax
+        mov calcNum1,0d
+        mov calcNum2,0d
+
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
     ; ======= SALIR ==============
     operationExit:
         mov ax,calcResult
