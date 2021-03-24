@@ -12,6 +12,7 @@ include macros.asm
     ; ========= VARIABLES PARA FACTORIAL UN NUMERO ==============
     factResult dw 1d
     factCount dw 0d
+    factCountAux dw 1d
     ; ========= VARIABLES PARA CALCULADORA ==============
     calcNum1 dw 0d;
     calcNum2 dw 0d;
@@ -20,6 +21,29 @@ include macros.asm
     calcCount db 0;
     number_str_calc1 db 100 dup(' '),'$'
     number_str_calc2 db 100 dup(' '),'$'
+    calcFlag db 0;
+    ; ========= VARIABLES PARA LEER ARCHIVOS ==============
+    file_name db "a.txt",00h; Nombre del archivo
+    bufferRead db 500d dup("$"); Buffer de lectura de archivos
+    textFile db 5 dup('$')
+    handler dw ?
+    getPathFile db 100 dup(' '),'$'
+    ; ========= VARIABLES PARA LEER ARCHIVOS ==============
+    ;concat_string db 100 dup('$')
+    concat_string db 100 dup('mundo $')
+    contador dw 0000h;
+    test1 db 100 dup('hola $')
+    ; ========= VARIABLES PARA ESCRIBIR ARCHIVOS ==============
+    wFfileName db "report.htm",00h
+    msgWfSalto db 0ah, 0dh, '  ', '$' 
+    msgWfIng db 0ah, 0dh, '>> Ingrese el nombre archivo: ', 0ah, 0dh, ' Ejemplo: (c:nombre.htm)', '$' 
+    wfHandler dw ?
+    prueba db 10, '<h1> Hola </h1> </br>',' '
+    prueba2 db 10, '<h2> Hola jdkfjdf </h2> </br>',' '
+    wFbufferent db 50 dup('$')
+    ; ========= VARIABLES   REPORTES ==============
+    idList dw 10 dup(0),'$'
+    resultList dw 10 dup ('$'),'$'
     ; ================ MENU PRINCIPAL ==================================
     msgM0 db 10,13,7, "=================================","$"
     msgM1 db 10,13,7, "=========== MAIN MENU ===========","$" ; Titulo del menu
@@ -35,9 +59,12 @@ include macros.asm
     ; ================ MENU FACTORIAL ==================================
     msgF db 10,13,7, "============ FACTORIAL ============","$"
     msgNum db 10,13,7, ">> Ingrese un Numero","$"
-    msgFZero db 10,13,7, "1","$"
+    msgFZero db  "0! = 1","$"
     msgWarinig db 10,13,7, ">> Numero fuera de rango,debe ser 0 <= x <= 7 ","$"
-
+    msgFPor db  "*","$"
+    msgFIgual db  "=","$"
+    msgFSpace db 10,13,7, ">> ","$"
+    msgFDIgual db  "! = ","$"
 
     ; ================ DATAOS DE LA CARATULA ==================================
     msgC0 db 10,13,7, "=========== DATA INFORMATION ===========","$"
@@ -60,8 +87,11 @@ include macros.asm
     msgCalc4 db 10,13,7, ">> Simbolo Invalido :c ","$"
     msgCalc5 db 10,13,7, ">> Ingrese su 2do Numero, format: 00","$"
     msgCalc6 db 10,13,7, ">> Ingrese un operado","$"
-    msgCalc7 db 10,13,7, ">> Ingreo a la division","$"
+    msgCalc7 db 10,13,7, ">> Solo se acepta 10 operaciones como maximo","$"
 
+    ; ================ LECTURA DE ARCHIVO ==================================
+    msgRF db 10,13,7, ">> Error al abrir el archivo","$"
+    msgRF1 db 10,13,7, ">> Error en la lectura del archivo","$"
 
 
 
@@ -131,7 +161,34 @@ include macros.asm
 ; =========== OPCION NO.1 "CARGAR ARCHIVO" ===========
 loadFile:
     mClearSC
+    ;mReadXML
+    ;mReadFile file_name,handler
+    ;mJoinString concat_string,test1
 
+    xor si,si
+    xor cx,cx
+    xor ax,ax
+    xor bx,bx
+    xor di,di
+    mov cx,SIZEOF wfBufferent
+
+    ;mPrint msgWfIng
+    ;mGetPath wfBufferent
+    mCreateFile wFfileName,wfHandler
+    ; ========== ESCRIBIR ARCHIVIO ==========
+    ;mov ah, 40h
+    ;mov bx, wfHandler
+    ;mov cx, SIZEOF prueba
+    ;lea dx, prueba
+    ;int 21H
+    mWriteFile prueba,wfHandler
+    mWriteFile prueba2,wfHandler
+
+    mov ah,3eh
+    mov bx,wfHandler
+    int 21h 
+
+    
     mBackMainMenu
 .exit
 
@@ -168,6 +225,34 @@ factorialMode:
     mPrint msgCalc3 
     mPrint buffer_num
     mov factResult,1d
+
+
+    mPrint msgFSpace ; >>
+    mov ax,factCount
+    intToString buffer_num
+    mPrint buffer_num
+    mPrint msgFDIgual
+
+    mov cx,factCount
+    mostar:        
+        mov ax,factCountAux
+        push ax
+        intToString buffer_num
+        mPrint buffer_num
+        pop ax
+        
+        cmp cx,factCountAux
+        jz salirF
+        inc factCountAux 
+        mPrint msgFPor
+        
+    jmp mostar
+
+    salirF:
+        mov factCountAux,1d
+        mov factCount,0d
+        mBackMainMenu
+
     mBackMainMenu
 .exit
 errorFactorial:
@@ -175,6 +260,7 @@ errorFactorial:
     mBackMainMenu
 .exit
 zeroFactorial:
+    mPrint msgFSpace ; >>
     mPrint msgFZero
     mBackMainMenu
 .exit

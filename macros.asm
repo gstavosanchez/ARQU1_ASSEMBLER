@@ -174,11 +174,14 @@ endm
 
 mCalculator macro
     local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle,movRegisterSub
-    local movRegisterMul,movRegisterDiv
+    local movRegisterMul,movRegisterDiv,operationLimit,valueNegativeNum,valueNegativeResult
     mClearSC
     mPrint msgCalc
     ; ========== CICLO PARARA ESCOGER LA OPCION =============
     operationCycle:
+
+        ;cmp ax,10;Compara si el numero es mayor(>) que DIEZ
+        ;ja operationLimit
 
         cmp calcCount,0
         je movCycle
@@ -394,9 +397,12 @@ mCalculator macro
         inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
     movRegisterDiv:
-        ;mPrint msgCalc7
+        
         mPrint msgCalc5; Mostrar Ingrese operador
         mSaveCalcNum2
+
+        ;mNegNum calcNum1
+        ;mNegNum calcNum2
 
         xor ax,ax
         xor bx,bx
@@ -405,6 +411,8 @@ mCalculator macro
         mov bx,calcNum2; bx = 2
         div bx; ax = ax / bx
         
+        ;cmp calcFlag,1 ; Si es igual a 1, hay un negativo
+        ;je valueNegativeNum 
 
         add ax,calcResult
         mov calcResult,ax
@@ -424,6 +432,174 @@ mCalculator macro
         mov calcResult,0d
         mov calcCount,0d
         mBackMainMenu
+    
+    operationLimit:
+        mPrint msgCalc7
+        mov ax,calcResult
+        intToString buffer_num
+        mPrint msgCalc3
+        mPrint buffer_num
+        mov calcResult,0d
+        mov calcCount,0d
+        mBackMainMenu
 
+   
+    valueNegativeNum:
+        neg calcResult
+
+        add ax,calcResult
+        mov calcResult,ax
+
+        mov calcNum1,0d
+        mov calcNum2,0d
+        
+        mov calcFlag,0; Cambia de estado la bandera, indicar que no hay un negativo
+        inc calcCount; Se incrementa el contador en 1    
+    jmp operationCycle
 
 endm
+
+; ============= CONVIERTE A POSITIVO ===================
+mNegNum macro intNumber
+    local negNumber
+    cmp intNumber,0; Comparar si el numero es menor(<) que CERO
+    jl negNumber
+    
+    negNumber:
+        neg intNumber; Se niega el numero para que sea positivo
+        mov calcFlag,1; Cambia de estado la bandera, indicar que hay un negativo
+endm
+; ================ LEER ARCHIVO =========================
+; Macro personal que lee un archivo de texto y carga su contenido en la 
+; variable de salida "buffer_salida"
+mReadFile macro file_name, handler_file
+    ;org 100h
+    local openFile,readFile,exit,errorOpen,closeFile,errorRead
+    openFile:
+        mov ah,3dh
+        mov al,0 ; Indicar que abrimos en modo lectura 
+        mov dx,offset file_name
+        int 21h
+        jc errorOpen
+        mov handler_file,ax
+        jmp readFile
+        ;jmp closeFile
+    
+    readFile:
+        mov ah,3fh
+        mov bx,handler_file
+        mov dx,offset textFile
+        mov cx,4; numeros de caracteres a leer
+        int 21h
+        jc errorRead
+        ;cmp ax,0; si ax = 0 significa EOF(Final del archivo , end of file)
+        mPrint textFile
+        jz closeFile
+        ;jmp readFile
+
+    closeFile:
+        mov ah,3eh
+        mov bx,handler_file
+        int 21h 
+        mBackMainMenu
+    errorOpen:
+        mPrint msgRF
+    
+    errorRead:
+        mPrint msgRF1
+endm
+
+mReadXML MACRO
+    local mainCycle,catchData,exitData
+    exitData:
+        mPrint text
+     
+endm
+; =================== ESCRIBIR ARCHIVO =================================
+mCreateFile macro buffer,handler
+    mov ah, 3ch
+    mov cx, 00h
+    lea dx, buffer
+    int 21h
+    mov handler, ax
+endm
+mGetPath macro path
+    LOCAL obtenerChar, finOT 
+    xor si,si 
+    obtenerChar:
+        mGetChar
+        cmp al,0dh
+        je finOT
+        mov path[si],al
+        inc si
+    jmp obtenerChar
+
+    finOT:
+        mov al,00h
+        mov path[si],al
+endm
+mGetChar macro
+    MOV AH, 01h
+    INT 21H
+endm
+mWriteFile macro data, handler_file
+    local writeData, close
+
+   
+    mov ah,40h
+    mov bx, handler_file
+    mov cx, sizeof data
+    lea dx, data
+    int 21h
+
+    ;closeFile:
+
+    ;    mBackMainMenu
+endm
+; =================== UNIR STRING =================================
+mJoinString macro destinationSTR,source; "destinationSTR = Destino= mundo", source = Origen = hola
+    local exitJoin,joinCycle,sizeOfDestination,exitSizeOf
+    ;xor si,si
+    xor di,di
+    ;xor ax,ax
+    ;xor cx,cx
+    ;mov si,0000h; Lleva el contro de donde de la variable a guardar
+    ;mov di,0000h
+    xor al,al
+    
+
+    mov cx,sizeof source
+    ;mov ax,cx
+    ;intToString buffer_num
+    ;mPrint buffer_num
+    ;mov di,ax
+
+    
+    joinCycle:
+        mov al,source[di]; Se copia el caracter en la posición SI hacia el registro si
+        cmp al,24h ; Se compara que sea el signo "$", fin de la cadena
+        jz exitJoin
+        inc di; Incrementamos el indice de lectura del origen
+        mov destinationSTR[si],al; Se copia lo que esta en el origen a destino 
+        ;mPrint msgFSpace ; >>
+        ;mPrint destinationSTR
+        inc si; Incrementa el contador del destino
+    loop joinCycle
+    exitSizeOf:
+        mov si,0000h
+        xor al,al
+        ;inc di
+        ;mov di,0000h;
+        ;mov ax,di
+        ;intToString buffer_num
+        ;mPrint buffer_num
+    jmp joinCycle
+
+
+    exitJoin:
+        mPrint destinationSTR
+        mov si,0000h
+        mov di,0000h
+        xor al,al
+      
+endm 
