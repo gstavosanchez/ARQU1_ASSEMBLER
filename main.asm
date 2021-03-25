@@ -30,20 +30,35 @@ include macros.asm
     getPathFile db 100 dup(' '),'$'
     ; ========= VARIABLES PARA LEER ARCHIVOS ==============
     ;concat_string db 100 dup('$')
-    concat_string db 100 dup('mundo $')
+    concat_string db 2500 dup('$')
     contador dw 0000h;
-    test1 db 100 dup('hola $')
+    test1 db 'hola','$'
+    test2 db 'mundo','$'
+    test3 db ' saludos','$'
     ; ========= VARIABLES PARA ESCRIBIR ARCHIVOS ==============
-    wFfileName db "report.htm",00h
+    wFfileName db "report.html",00h
     msgWfSalto db 0ah, 0dh, '  ', '$' 
     msgWfIng db 0ah, 0dh, '>> Ingrese el nombre archivo: ', 0ah, 0dh, ' Ejemplo: (c:nombre.htm)', '$' 
     wfHandler dw ?
-    prueba db 10, '<h1> Hola </h1> </br>',' '
-    prueba2 db 10, '<h2> Hola jdkfjdf </h2> </br>',' '
+    wfData0 db 10, '<!DOCTYPE html>',' '
+    wfData01 db 10, '<html lang="en">',' '
+    wfData02 db 10, '<head>',' '
+    wfData03 db 10, '<meta charset="UTF-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge">',' '
+    wfData04 db 10, '<meta name="viewport" content="width=device-width, initial-scale=1.0"> ',' '
+    wfData004 db 10, '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">',' '
+    wfData05 db 10, '<title>Report Practica No.3</title>',' '
+    wfData06 db 10, '</head> <body>',' '
+    prueba db 10, '<h1> Practica No.3 Arqui 1 Sección A </h1> </br>',' '
+    prueba2 db 10, '<h3> <strong>Estudiante:</strong> Elmer Gustavo Sanchez García </h3> </br>',' '
+    wfData1 db 10, '<h3> <strong>Carnet:</strong> 201801351 </h3> </br>',' '
+    wfClose db 10, '</body> </html>',' '
     wFbufferent db 50 dup('$')
     ; ========= VARIABLES   REPORTES ==============
+    ; === REPORTE ===
     idList dw 10 dup(0),'$'
-    resultList dw 10 dup ('$'),'$'
+    resultList dw 20 dup ('$'),'$'
+    countReport dw 0d;
+    ; === === === === ===
     ; ================ MENU PRINCIPAL ==================================
     msgM0 db 10,13,7, "=================================","$"
     msgM1 db 10,13,7, "=========== MAIN MENU ===========","$" ; Titulo del menu
@@ -88,10 +103,30 @@ include macros.asm
     msgCalc5 db 10,13,7, ">> Ingrese su 2do Numero, format: 00","$"
     msgCalc6 db 10,13,7, ">> Ingrese un operado","$"
     msgCalc7 db 10,13,7, ">> Solo se acepta 10 operaciones como maximo","$"
+    msgCalc8 db 10,13,7, ">> Dese guardar [S/N]: ","$"
 
+    calc_string db 2500 dup('$')
+    msgCSum db  "+","$"
+    msgCSub db  "-","$"
+    msgCDiv db  "/","$"
+    msgCMul db  "*","$"
+    msgCEq db  "=","$"
     ; ================ LECTURA DE ARCHIVO ==================================
     msgRF db 10,13,7, ">> Error al abrir el archivo","$"
     msgRF1 db 10,13,7, ">> Error en la lectura del archivo","$"
+
+    ; ======================== FEHCA Y HORA ==================================
+    digito_1          db 0
+    digito_2          db 0
+
+    hora_abrir        db 10, '<h2> Hora: ', ' '
+    hora_cerrar       db '</h2>', ' '
+
+    fecha_abrir       db 10, '<h2> Fecha: ', ' '
+    fecha_cerrar      db '</h2> <br>', ' '
+
+    dos_puntos        db ':', ' '
+    barra             db '/', ' '
 
 
 
@@ -149,6 +184,11 @@ include macros.asm
         cmp opcion,51 ; "3 = ascci 51" compara si es 3 == 51(ascci)
         je factorialMode ; salto a la etiqueta factorial
 
+        ; ======================= OPCION 4 "REPORTE" =======================
+        cmp opcion,52 ; "4 = ascci 52" compara si es 3 == 51(ascci)
+        je reportMode ; salto a la etiqueta factorial
+
+
     jmp main ; Regresa al menu principal
 
     exitCMD:
@@ -157,36 +197,148 @@ include macros.asm
 
 
 .exit
-
-; =========== OPCION NO.1 "CARGAR ARCHIVO" ===========
-loadFile:
-    mClearSC
-    ;mReadXML
-    ;mReadFile file_name,handler
-    ;mJoinString concat_string,test1
-
+; =========== OPCION NO.4 "GENERAR REPORTE" ===========
+reportMode:
     xor si,si
     xor cx,cx
     xor ax,ax
     xor bx,bx
     xor di,di
-    mov cx,SIZEOF wfBufferent
 
-    ;mPrint msgWfIng
-    ;mGetPath wfBufferent
+    ; ========== CREAR ARCHIVIO ==========
     mCreateFile wFfileName,wfHandler
     ; ========== ESCRIBIR ARCHIVIO ==========
-    ;mov ah, 40h
-    ;mov bx, wfHandler
-    ;mov cx, SIZEOF prueba
-    ;lea dx, prueba
-    ;int 21H
+    mWriteFile wfData0,wfHandler
+    mWriteFile wfData01,wfHandler
+    mWriteFile wfData02,wfHandler
+    mWriteFile wfData03,wfHandler
+    mWriteFile wfData04,wfHandler
+    mWriteFile wfData004,wfHandler
+    mWriteFile wfData05,wfHandler
+    mWriteFile wfData06,wfHandler
     mWriteFile prueba,wfHandler
     mWriteFile prueba2,wfHandler
+    mWriteFile wfData1,wfHandler
+    ;mWriteFile wfData2,wfHandler
+    ;mWriteFile wfData3,wfHandler
+    ; ========== HORA ==========
+    MOV AH,2CH
+    INT 21H
+    ;Hora = CH
+    ;Minutos = CL
 
+    ;=== DIGITOS DE LA HORA ===
+    mov al, ch 
+    guardar_ digito_1, digito_2
+
+    mWriteFile hora_abrir,wfHandler 
+    mWriteFile digito_1, wfHandler
+    mWriteFile digito_2,wfHandler 
+    mWriteFile dos_puntos,wfHandler 
+
+    ;=== DIGITOS DE LOS MINUTOS ===
+    MOV AH,2CH
+    INT 21H
+
+    mov digito_1, 0
+    mov digito_2, 0
+
+    mov al, cl
+    guardar_ digito_1, digito_2
+
+    mWriteFile digito_1,wfHandler 
+    mWriteFile digito_2,wfHandler 
+    mWriteFile hora_cerrar, wfHandler 
+
+    ;============================== DATE =================================
+    ;CX = Año
+    ;DH = Mes
+    ;DL = Día del mes
+
+    ;==== DAY ====
+    MOV AH,2AH
+    INT 21H
+
+    mov digito_1, 0
+    mov digito_2, 0
+    
+    mov al, dl
+    guardar_ digito_1, digito_2
+
+    mWriteFile fecha_abrir,wfHandler 
+    mWriteFile digito_1,wfHandler 
+    mWriteFile digito_2,wfHandler 
+    mWriteFile barra,wfHandler 
+
+    ;==== MOUNTH ====
+    MOV AH,2AH  
+    INT 21H
+
+    mov digito_1, 0
+    mov digito_2, 0
+
+    mov al, dh
+    guardar_ digito_1, digito_2
+
+    mWriteFile digito_1,wfHandler 
+    mWriteFile digito_2,wfHandler 
+    mWriteFile barra,wfHandler 
+
+    ;==== YEAR ====
+    MOV AH,2AH  
+    INT 21H
+
+    mov digito_1, 0
+    mov digito_2, 0
+
+    add cx, 0F830h  ; Add 0F830 to adjust hexadecimal effects on year
+    mov ax, cx
+
+    guardar_ digito_1, digito_2
+
+    mWriteFile digito_1,wfHandler, 
+    mWriteFile digito_2,wfHandler 
+    mWriteFile fecha_cerrar,wfHandler 
+
+    ; ========== CERAR ARCHIVIO ==========
+    mWriteFile wfClose,wfHandler 
     mov ah,3eh
     mov bx,wfHandler
     int 21h 
+
+    mBackMainMenu
+.exit
+; =========== OPCION NO.1 "CARGAR ARCHIVO" ===========
+loadFile:
+    mClearSC
+    ;mReadXML
+    ;mReadFile file_name,handler
+    mJoinString concat_string,test1
+    mJoinString concat_string,test2
+    mJoinString concat_string,test3
+
+    mPrint msgFSpace ; >>
+    mPrint concat_string
+
+    mPrint msgFSpace ; >>
+    mPrint wfData0
+
+
+    ;mov cx,0000h
+
+    ;mPrint msgFSpace
+    ;mPrint resultList
+
+    ;printWhile:
+     ;   mov ax, 
+      ;  mPrint msgFSpace
+       ; intToString buffer_num
+       ; mPrint buffer_num
+
+        ;inc cx
+    ;jmp printWhile
+    ;endPrint:
+
 
     
     mBackMainMenu

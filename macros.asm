@@ -174,7 +174,7 @@ endm
 
 mCalculator macro
     local operationCycle,operationExit,operationSum,operationSub,operationMul,operationDiv,movRegisterSum,movCycle,movRegisterSub
-    local movRegisterMul,movRegisterDiv,operationLimit,valueNegativeNum,valueNegativeResult
+    local movRegisterMul,movRegisterDiv,operationLimit,valueNegativeNum,valueNegativeResult,saveOperation,yesSave, noSave
     mClearSC
     mPrint msgCalc
     ; ========== CICLO PARARA ESCOGER LA OPCION =============
@@ -429,9 +429,10 @@ mCalculator macro
         intToString buffer_num
         mPrint msgCalc3
         mPrint buffer_num
-        mov calcResult,0d
-        mov calcCount,0d
-        mBackMainMenu
+        jmp saveOperation
+        ;mov calcResult,0d
+        ;mov calcCount,0d
+        ;mBackMainMenu
     
     operationLimit:
         mPrint msgCalc7
@@ -442,8 +443,42 @@ mCalculator macro
         mov calcResult,0d
         mov calcCount,0d
         mBackMainMenu
+    
+    ; =========== GUARDAR RESULTADO =========== 
+    saveOperation:
+        ; =========== CAPTURA DE UN CARACTER =========== 
+        mPrint msgCalc8 ; Preguntar si desea guardar archivo
+        mov ah,01h ; instruccion para guardar un carecter
+        int 21h
+        mov calcType,al; [S/N];
 
-   
+        cmp calcType,115 ; Si es igual "s"
+        jz yesSave
+
+        cmp calcType,110; Si es igual "n"
+        jz noSave
+    
+
+        mPrint msgCalc4; Mensaje de simbolo invalido
+
+    jmp saveOperation
+
+     ; =========== "SI" GUARDAR RESULTADO =========== 
+    yesSave:
+        mov calcResult,0d
+        mov calcCount,0d
+
+        mSaveInArray
+        ;inc countReport
+        mBackMainMenu
+
+    ; =========== "NO" GUARDAR RESULTADO =========== 
+    noSave:
+        mov calcResult,0d
+        mov calcCount,0d
+        mBackMainMenu
+    
+     ; =========== ======== ===========  =========== 
     valueNegativeNum:
         neg calcResult
 
@@ -457,6 +492,43 @@ mCalculator macro
         inc calcCount; Se incrementa el contador en 1    
     jmp operationCycle
 
+endm
+; =========== GUARDAR RESULTADO EN ARREGLO=========== 
+mSaveInArray macro
+    local isZero,isMore,getIndex,mainWhile
+    mov si,0000h; Lleva el contro de donde de la variable a guardar
+    
+    mov ax, countReport
+    mPrint msgFSpace
+    intToString buffer_num
+    mPrint buffer_num
+
+    mainWhile:  
+        cmp countReport,0
+        jz isZero
+        
+        cmp si,countReport
+        jz isMore
+
+        inc si
+    jmp mainWhile
+
+    isZero:
+        mPrint msgFSpace
+        mov dx, calcResult 
+        mov [resultList + si ],dx
+        ;mov resultList[si],dx
+        inc countReport
+
+    isMore:
+        ;inc si
+        mov dx, calcResult 
+        mov [resultList + si ],dx
+        ;mov resultList[si],ax
+        inc countReport
+
+
+    
 endm
 
 ; ============= CONVIERTE A POSITIVO ===================
@@ -559,47 +631,45 @@ endm
 ; =================== UNIR STRING =================================
 mJoinString macro destinationSTR,source; "destinationSTR = Destino= mundo", source = Origen = hola
     local exitJoin,joinCycle,sizeOfDestination,exitSizeOf
-    ;xor si,si
+    xor si,si
     xor di,di
-    ;xor ax,ax
-    ;xor cx,cx
-    ;mov si,0000h; Lleva el contro de donde de la variable a guardar
-    ;mov di,0000h
+    mov si,0000h; Lleva el contro de donde de la variable a guardar
+    mov di,0000h
     xor al,al
-    
-
-    mov cx,sizeof source
-    ;mov ax,cx
-    ;intToString buffer_num
-    ;mPrint buffer_num
-    ;mov di,ax
-
-    
+    sizeOfDestination:
+        mov al,destinationSTR[di]
+        cmp al,24h ; Se compara que sea el signo "$", fin de la cadena
+        jz exitSizeOf
+        inc di 
+    jmp sizeOfDestination
     joinCycle:
-        mov al,source[di]; Se copia el caracter en la posición SI hacia el registro si
+        mov al,source[si]; Se copia el caracter en la posición SI hacia el registro si
         cmp al,24h ; Se compara que sea el signo "$", fin de la cadena
         jz exitJoin
-        inc di; Incrementamos el indice de lectura del origen
-        mov destinationSTR[si],al; Se copia lo que esta en el origen a destino 
-        ;mPrint msgFSpace ; >>
-        ;mPrint destinationSTR
-        inc si; Incrementa el contador del destino
-    loop joinCycle
+        inc si; Incrementamos el indice de lectura del origen
+        mov destinationSTR[di],al; Se copia lo que esta en el origen a destino 
+        inc di; Incrementa el contador del destino
+    jmp joinCycle
     exitSizeOf:
         mov si,0000h
         xor al,al
-        ;inc di
-        ;mov di,0000h;
-        ;mov ax,di
-        ;intToString buffer_num
-        ;mPrint buffer_num
     jmp joinCycle
-
-
     exitJoin:
-        mPrint destinationSTR
         mov si,0000h
         mov di,0000h
         xor al,al
       
 endm 
+
+
+; =================== FECHA Y HORA =================================
+; Para setear las variables 18 = 1-8
+guardar_ macro digito1, digito2
+    aam           
+    mov bx, ax    
+    add bx, 3030h 
+
+    mov digito1, bh
+    mov digito2, bl
+endm
+
