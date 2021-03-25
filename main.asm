@@ -18,7 +18,7 @@ include macros.asm
     calcNum2 dw 0d;
     calcResult dw 0d;
     calcType db 0;
-    calcCount db 0;
+    calcCount dw 0d;
     number_str_calc1 db 100 dup(' '),'$'
     number_str_calc2 db 100 dup(' '),'$'
     calcFlag db 0;
@@ -52,6 +52,20 @@ include macros.asm
     prueba2 db 10, '<h3> <strong>Estudiante:</strong> Elmer Gustavo Sanchez García </h3> </br>',' '
     wfData1 db 10, '<h3> <strong>Carnet:</strong> 201801351 </h3> </br>',' '
     wfClose db 10, '</body> </html>',' '
+
+    ; === === TABLE === ===
+    wfTable db 10, '<table class="table">',' '
+    wfClosTable db 10, '</table>',' '
+    wfThead db 10, '<thead>',' '
+    wfCloseThead db 10, '</thead>',' '
+    wfTr db 10, '<tr>',' '
+    wfCloseTr db 10, '</tr>',' '
+    wfTbody db 10, '<tbody>',' '
+    wfCloseTbody db 10, '</tbody>',' '
+    wfTh db 10, ' <th scope="col">No.</th>',' '
+    wfTh1 db 10, ' <th scope="col">Operación</th>',' '
+    wfTh2 db 10, ' <th scope="col">Resultado</th>',' '
+    ; === === === === ===
     wFbufferent db 50 dup('$')
     ; ========= VARIABLES   REPORTES ==============
     ; === REPORTE ===
@@ -105,12 +119,15 @@ include macros.asm
     msgCalc7 db 10,13,7, ">> Solo se acepta 10 operaciones como maximo","$"
     msgCalc8 db 10,13,7, ">> Dese guardar [S/N]: ","$"
 
-    calc_string db 2500 dup('$')
+    calc_string db 2000 dup('$')
+    report_text db 2000 dup('$')
     msgCSum db  "+","$"
     msgCSub db  "-","$"
     msgCDiv db  "/","$"
     msgCMul db  "*","$"
     msgCEq db  "=","$"
+    tdO db  "<td>","$" 
+    tdC db  "</td>","$" 
     ; ================ LECTURA DE ARCHIVO ==================================
     msgRF db 10,13,7, ">> Error al abrir el archivo","$"
     msgRF1 db 10,13,7, ">> Error en la lectura del archivo","$"
@@ -298,8 +315,34 @@ reportMode:
 
     mWriteFile digito_1,wfHandler, 
     mWriteFile digito_2,wfHandler 
-    mWriteFile fecha_cerrar,wfHandler 
+    mWriteFile fecha_cerrar,wfHandler
 
+    ;============ TABLA ==================
+    ; <table class="table"> 
+    mWriteFile wfTable,wfHandler
+    ; <thead>
+    mWriteFile wfThead,wfHandler
+    ; <tr>
+    mWriteFile wfTr,wfHandler
+    ; <th scope="col">#</th>
+    mWriteFile wfTh,wfHandler
+    mWriteFile wfTh1,wfHandler
+    mWriteFile wfTh2,wfHandler
+    ; </tr>
+    mWriteFile wfCloseTr,wfHandler
+    ;</thead>
+    mWriteFile wfCloseThead,wfHandler
+    ; <tbody>
+    mWriteFile wfTbody,wfHandler
+    ; === CODIGO GENERADO ===
+    mWriteFile report_text,wfHandler
+    ; === === === === === ===
+    ;</tbody>
+    mWriteFile wfCloseTbody,wfHandler
+    ;</table>
+    mWriteFile wfClosTable,wfHandler
+
+    mClearString report_text 
     ; ========== CERAR ARCHIVIO ==========
     mWriteFile wfClose,wfHandler 
     mov ah,3eh
@@ -321,7 +364,7 @@ loadFile:
     mPrint concat_string
 
     mPrint msgFSpace ; >>
-    mPrint wfData0
+    mPrint calc_string
 
 
     ;mov cx,0000h

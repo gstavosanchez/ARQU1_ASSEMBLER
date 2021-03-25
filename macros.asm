@@ -268,6 +268,16 @@ mCalculator macro
 
         ;add ax,calcResult
         mov calcResult,ax
+        ;========== JOIN STRING "SUMA"============
+        ; === SIMBOLO "+" ===
+        mJoinString calc_string,msgCSum
+
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ;========== === === === === ================
 
 
         mov calcNum1,0d
@@ -287,6 +297,39 @@ mCalculator macro
         add ax,calcResult
         mov calcResult,ax
 
+        ;========== JOIN STRING "SUMA"============
+
+        ; ============ COLUMNA 1 ===============
+        ; === <tr> ===
+        mJoinString calc_string,wfTr
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === CONTADOR ===
+        mov ax,calcCount
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+        ; === </td> ===
+        mJoinString calc_string,tdC
+
+        ; ============ COLUMNA 2 ===============
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === SIMBOLO "+" ===
+        mJoinString calc_string,msgCSum
+
+        ; === 2. DIGITO ===
+        mov ax,calcNum2
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === </td> ===
+        ;mJoinString calc_string,tdC
+        ;========== === === === === ================
 
         mov calcNum1,0d
         mov calcNum2,0d
@@ -309,6 +352,17 @@ mCalculator macro
         ;add ax,calcResult
         mov calcResult,ax
 
+        ;========== JOIN STRING "RESTA"============
+        ; === SIMBOLO "-" ===
+        mJoinString calc_string,msgCSub
+
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ;========== === === === === ================
+
         ;xor ax
         mov calcNum1,0d
         mov calcNum2,0d
@@ -324,6 +378,42 @@ mCalculator macro
 
         add ax,calcResult
         mov calcResult,ax
+
+        ;========== JOIN STRING "RESTA"============
+
+        ; ============ COLUMNA 1 ===============
+        ; === <tr> ===
+        mJoinString calc_string,wfTr
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === CONTADOR ===
+        mov ax,calcCount
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+        ; === </td> ===
+        mJoinString calc_string,tdC
+
+        ; ============ COLUMNA 2 ===============
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === SIMBOLO "-" ===
+        mJoinString calc_string,msgCSub
+
+        ; === 2. DIGITO ===
+        mov ax,calcNum2
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === </td> ===
+        ;mJoinString calc_string,tdC
+        ;========== === === === === ================
+
+
 
         ;xor ax
         mov calcNum1,0d
@@ -348,6 +438,17 @@ mCalculator macro
         ;add ax,calcResult
         mov calcResult,ax
 
+        ;========== JOIN STRING "MULTI"============
+        ; === SIMBOLO "*" ===
+        mJoinString calc_string,msgCMul
+
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ;========== === === === === ================
+
         ;xor ax
         mov calcNum1,0d
         mov calcNum2,0d
@@ -364,6 +465,41 @@ mCalculator macro
 
         add ax,calcResult
         mov calcResult,ax
+
+
+        ;========== JOIN STRING "MULTI"============
+
+        ; ============ COLUMNA 1 ===============
+        ; === <tr> ===
+        mJoinString calc_string,wfTr
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === CONTADOR ===
+        mov ax,calcCount
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+        ; === </td> ===
+        mJoinString calc_string,tdC
+
+        ; ============ COLUMNA 2 ===============
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === SIMBOLO "*" ===
+        mJoinString calc_string,msgCMul
+
+        ; === 2. DIGITO ===
+        mov ax,calcNum2
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === </td> ===
+        ;mJoinString calc_string,tdC
+        ;========== === === === === ================
 
         ;xor ax
         mov calcNum1,0d
@@ -388,6 +524,18 @@ mCalculator macro
 
         ;add ax,calcResult
         mov calcResult,ax
+
+        
+        ;========== JOIN STRING "DIVISION"============
+        ; === SIMBOLO "/" ===
+        mJoinString calc_string,msgCDiv
+
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ;========== === === === === ================
 
         ;xor ax
         mov calcNum1,0d
@@ -417,6 +565,40 @@ mCalculator macro
         add ax,calcResult
         mov calcResult,ax
 
+         ;========== JOIN STRING "DIV"============
+
+        ; ============ COLUMNA 1 ===============
+        ; === <tr> ===
+        mJoinString calc_string,wfTr
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === CONTADOR ===
+        mov ax,calcCount
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+        ; === </td> ===
+        mJoinString calc_string,tdC
+
+        ; ============ COLUMNA 2 ===============
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === 1. DIGITO ===
+        mov ax,calcNum1
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === SIMBOLO "/" ===
+        mJoinString calc_string,msgCDiv
+
+        ; === 2. DIGITO ===
+        mov ax,calcNum2
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+
+        ; === </td> ===
+        ;mJoinString calc_string,tdC
+        ;========== === === === === ================
+
         ;xor ax
         mov calcNum1,0d
         mov calcNum2,0d
@@ -429,10 +611,19 @@ mCalculator macro
         intToString buffer_num
         mPrint msgCalc3
         mPrint buffer_num
+        ; ============ COLUMNA 3 ===============
+        ; === </td> ===
+        mJoinString calc_string,tdC
+        ; === <td> ===
+        mJoinString calc_string,tdO
+        ; === RESULTADO ===
+        mov ax,calcResult
+        intToString buffer_num
+        mJoinString calc_string,buffer_num
+        ; === </td> ===
+        mJoinString calc_string,tdC
+        ;========== === === === === ================
         jmp saveOperation
-        ;mov calcResult,0d
-        ;mov calcCount,0d
-        ;mBackMainMenu
     
     operationLimit:
         mPrint msgCalc7
@@ -467,15 +658,20 @@ mCalculator macro
     yesSave:
         mov calcResult,0d
         mov calcCount,0d
-
-        mSaveInArray
-        ;inc countReport
+        ;==== JOIN STRING ========
+        ; === </tr> ===
+        mJoinString calc_string,wfCloseTr
+        mJoinString report_text,calc_string
+        mClearString calc_string
+        
         mBackMainMenu
 
     ; =========== "NO" GUARDAR RESULTADO =========== 
     noSave:
         mov calcResult,0d
         mov calcCount,0d
+        mClearString calc_string
+
         mBackMainMenu
     
      ; =========== ======== ===========  =========== 
@@ -660,6 +856,23 @@ mJoinString macro destinationSTR,source; "destinationSTR = Destino= mundo", sour
         xor al,al
       
 endm 
+
+mClearString macro string
+    local RepeatLoop
+    push cx
+    push si
+    
+    xor si, si
+    xor cx, cx
+    mov cx, SIZEOF string
+
+    RepeatLoop:
+        mov string[si], 24h
+        inc si
+    Loop RepeatLoop
+    pop si
+    pop cx
+endm
 
 
 ; =================== FECHA Y HORA =================================
