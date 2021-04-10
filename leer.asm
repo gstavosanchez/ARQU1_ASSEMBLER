@@ -18,7 +18,8 @@ ObtenerRuta macro buffer
     MOV buffer[si], al
     inc si
     jmp ObtenerChar
-    FinOT:
+    FinOT
+    :
     MOV al, 00h
     MOV buffer[si], al
 endm 

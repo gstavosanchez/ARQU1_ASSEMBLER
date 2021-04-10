@@ -742,7 +742,7 @@ endm
 ; variable de salida "buffer_salida"
 mReadFile macro file_name, handler_file
     ;org 100h
-    local openFile,readFile,exit,errorOpen,closeFile,errorRead
+    local openFile,readFile,exit,errorOpen,closeFile,errorRead,clean_var
     openFile:
         mov ah,3dh
         mov al,0 ; Indicar que abrimos en modo lectura 
@@ -757,14 +757,18 @@ mReadFile macro file_name, handler_file
         mov ah,3fh
         mov bx,handler_file
         mov dx,offset textFile
-        mov cx,4; numeros de caracteres a leer
+        mov cx,101; numeros de caracteres a leer
         int 21h
         jc errorRead
-        ;cmp ax,0; si ax = 0 significa EOF(Final del archivo , end of file)
-        mPrint textFile
+        cmp ax,0; si ax = 0 significa EOF(Final del archivo , end of file)
         jz closeFile
+        mPrint textFile
+    jz readFile
         ;jmp readFile
 
+    clean_var:
+
+    jmp readFile
     closeFile:
         mov ah,3eh
         mov bx,handler_file
