@@ -77,7 +77,7 @@ m_save_string macro buffer
     MOV al, 00h
     MOV buffer[si], al
 endm
-; ===================================== ANALIZADOR =====================================
+; ===================================== OBTENER NUMEROS =====================================
 m_get_number_list macro array_list
     local start,save_,start_save,final_save,final
     xor si,si
@@ -1391,7 +1391,7 @@ m_menu_sort macro
         m_str_to_int buffer_read    ; Convierte un numero de string a int y lo guarda en ax
         mov number_speed,ax         ; number = ax
         cmp number_speed,10d        ; if
-        jge shell_opcion           ; if (numero >= 10) ->> vuelve a pedir el numero
+        jge shell_opcion            ; if (numero >= 10) ->> vuelve a pedir el numero
 
         m_clean_screen              ; Limpia la pantalla
         m_print msg_asc_desc        ; Imprime un mesanje en consola "Selecciona su velocidad"
