@@ -15,6 +15,7 @@ include macros.asm
             db '========================================',0dh,0ah,'$'
   msg_input db 10,13,7, '>> Ingrese Comando','$'
   msg_cmd db 10,13,7, '>> ejecuntado salir','$'
+  msg_cmdp db 10,13,7, '>> ejecuntado promedio','$'
   msg_err db 10,13,7, '>> opcion incorrecta','$'
   msg_opcion db 10,13,7, '>> ','$'
   msg_error_open db 10,13,7, ">> Error al abrir el archivo","$"
@@ -22,11 +23,22 @@ include macros.asm
   aux_number db 3 dup('$')      ; Almacenara el numero momentaneamente para despues guardarlo en un arreglo
   array_num dw 1200 dup(0)      ; Arreglo de tipo numeros   
   buffer_file db 1000 dup('$')  ; Almacena los datos leidos del archivo
-  buffer_str db 50d dup("$")    ; Buffer string ,arreglo de string multiproposito(numeros,datos de consola)
+  buffer_str db 60d dup("$")    ; Buffer string ,arreglo de string multiproposito(numeros,datos de consola)
+  decimal dw 0d                 ; Guarda el numero decimal de cualquier resultado
+  entero dw 10d                 ; Guarda el numero entero de la respuesta  
   file_name db 30d dup("$")     ; almacena el nombre del archivo a leer 
   file_handler dw ?             ; Handler file
-  flag dw 0d                    ; Contador auxiliar para guardar en arreglo de numeros , TAMAÑO DEL ARREGLO 
+  flag dw 0d                    ; Contador auxiliar para guardar en arreglo de numeros , TAMAÑO REAL DEL ARREGLO 
+  flag_2 dw 0d                  ; Cantidad de numeros en el arreglo 
   number_list db 1200 dup('$')  ; Arreglo de numeros guardados del archivo en formato texto -> AHORA varible auxiliar almacena un numero
+  result dw 0d                  ; Guarda el valor de culquier entero 
+  dot db '.','$'                ; punto para los decimales
+  buffer_num db 10d dup("$")    
+  b_size dw 0d;                 ; size aux para el ordenamiento
+  b_i dw 0d                     ; var i para el ordenamiento
+  b_j dw 0d                     ; var j para el ordenamiento
+  b_aux dw 0d                   ; aux = array[k +1]
+  b_temp dw 0d                  ; temp = array[k]
   ; == == == VARIABLES TO PAINT == == == == 
   axis_y dw 0d                  ; Valor de inicio de la y para pintar el eje y 
   axis_x dw 0d                  ; Valor de inicio de la x para pintar el eje x
@@ -34,6 +46,7 @@ include macros.asm
   bar_y dw 0d                   ; valor de inicio de la y para pintar la barra(altura)
   index_column db 0             ; posición del char en la columna para pintar la letra
   ; == == == == == == == == == == == ==  ==
+  curr_letter db 0              ; letra actual del interprete
 ; ----------------------------------------------- SEGMENTO DE CODIGO ----------------------------------------------
 .code
 
@@ -52,6 +65,7 @@ include macros.asm
     inteprete buffer_str          ; instrepretar string
 
   JMP main_init_while
+
 
   exit_main_menu:
     .exit
@@ -78,8 +92,9 @@ PAINT_AXIS PROC
   RET 
 PAINT_AXIS ENDP
 end
-
-;m_print msg_opcion
-    ;mov ax,flag
-    ;m_int_to_str buffer_num
-    ;m_print buffer_num
+  ; == == == TEST == == ==
+  ;print msg_opcion
+  ;mov ax,flag_2
+  ;int_to_string buffer_num
+  ;print_ buffer_num
+  ; == == == =  = == == ==

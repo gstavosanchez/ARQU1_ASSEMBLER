@@ -194,9 +194,10 @@ set_number_array macro array
     xor dx,dx
     xor si,si
 
-    mov flag,0d; regresa a su estado inicial
-    mov si,0000h; Lleva el contro del array de string
-    mov di,0000h; lleva el contro del aux
+    mov flag,0d                 ; regresa a su estado inicial
+    mov flag_2,0d               ; regresa a su estado inicial
+    mov si,0000h                ; Lleva el contro del array de string
+    mov di,0000h                ; lleva el contro del aux
     cycle:
         cmp array[si],24h; if(array[i] == '$')
         jz end_cycle
@@ -217,6 +218,7 @@ set_number_array macro array
         add ax,bx
         mov bx,ax
 
+        XOR AX,AX
         str_to_int aux_number         ; Se convierte el texto en numero
         mov array_num[bx],ax            ; se mueve a number_array[bx], lo que esta en ax(numero)
 
@@ -224,6 +226,7 @@ set_number_array macro array
         ; == =================== ==
         mov di,0000h;
         inc si
+        INC flag_2
         ; === === INCRMENTAR EL CONTAR EN 2 == ==
         XOR ax,ax        
         MOV ax,flag
@@ -486,7 +489,8 @@ endm
 ; ===================================== INTERPRETE =====================================
 ; @param string: cadena leida en consola 
 inteprete MACRO string
-    LOCAL main_while,exit_while,cmd_exit,execute_exit,cmd_err,cmd_file,execute_file,save_path
+    LOCAL main_while,exit_while,cmd_exit,execute_exit,cmd_err,cmd_file,execute_file,save_path,cmd_clean,exec_clean,c_while
+    LOCAL cmd_prom,exec_prom
     PUSHER_ALL
     CLEAN_RECORDS_ALL
     clean_str file_name                ;limpiar variable
@@ -497,10 +501,30 @@ inteprete MACRO string
         CMP string[si],61h          ; if
         JE cmd_file                 ; if (data[x] == a) ->> ir a comando file 
 
+        CMP string[si],6ch          ; if
+        JE cmd_clean                ; if (data[x] == l) ->> ir a  comando limpiar
+
+        CMP string[si],63h          ; if
+        JE c_while                  ; if (data[x] == c) ->> ir a  while de comandos
+
         INC si 
         CMP string[si],24h          ; if
         JZ cmd_err                  ; if (data[x] == $) ->> regresar main while 
     JMP cmd_err
+    ; == == == == == == COMANDO-C == == == == == ==
+    c_while:
+        INC si
+        MOV al,string[si]
+        MOV curr_letter,al 
+
+        CMP curr_letter,70h         ; if
+        JE cmd_prom                 ; if (al == p) ->> ir a  while de comandos
+
+        CMP curr_letter,6dh         ; if
+        JE c_while                  ; if (al == m) ->> ir a  while de comandos
+         
+    JMP cmd_err
+    ; == == == == == == == == ==  == == == == == ==
     cmd_exit:
         INC si 
         CMP string[si],61h      ; if
@@ -546,7 +570,59 @@ inteprete MACRO string
         INC di
     JMP save_path
 
-    
+    ; =========== LIMPIAR CONSOLA =============
+    cmd_clean:
+        INC si 
+        CMP string[si],69h          ; if
+        JE cmd_clean                ; if (data[x] == i) ->> regresar cmd_clean
+
+        CMP string[si],6dh          ; if
+        JE cmd_clean                ; if (data[x] == m) ->> regresar cmd_clean
+
+        CMP string[si],70h          ; if
+        JE cmd_clean                ; if (data[x] == p) ->> regresar cmd_clean
+
+        CMP string[si],61h          ; if
+        JE cmd_clean                ; if (data[x] == a) ->> regresar cmd_clean
+
+        CMP string[si],72h          ; if
+        JE exec_clean               ; if (data[x] == r) ->> ejecuta el comando limpiar consola
+    JMP cmd_err
+    exec_clean:
+       POPPER_ALL
+       clean_screen 
+    JMP main_init_while
+    ; ====== ========================= ==========
+    ; =========== ===== PROMEDIO ===== ==========
+    cmd_prom:
+        XOR ax,ax
+        INC si
+        MOV al,string[si]
+        MOV curr_letter,al 
+
+
+        CMP curr_letter,72h          ; if
+        JE cmd_prom                  ; if (data[x] == r) ->> regresar al ciclo cmd_prom
+
+        CMP curr_letter,6fh          ; if
+        JE cmd_prom                  ; if (data[x] == o) ->> regresar al ciclo cmd_prom
+
+        CMP curr_letter,6dh          ; if
+        JE exec_prom                 ; if (data[x] == m) ->> regresar al ciclo cmd_prom
+    JMP cmd_err
+    exec_prom:
+        POPPER_ALL
+        clean_str buffer_str                    ;limpiar variable
+        ;average array_num,flag                  ; ejecuta el promedio
+         ; == == == TEST == == ==
+        print msg_opcion
+        mov ax,flag
+        int_to_string buffer_num
+        print_ buffer_num
+        ; == == == =  = == == ==
+
+    JMP main_init_while
+    ; ====== ========================= ==========
     execute_file:
         POPPER_ALL
         clean_str buffer_str                    ;limpiar variable
@@ -558,7 +634,9 @@ inteprete MACRO string
         ; == == CARGAR A ARRAY == ==
         get_number_list buffer_file              ; guarda en el arreglo "number_list"
         set_number_array number_list             ; recorre el arreglo de string de numeros "10 20 30" y los almacena en arreglo numerico (number_array)
+        bubble_sort array_num                    ; ordemiento burbuja 
         print_array_16 array_num, flag           ; imprime el listado de nuemeros del arreglo de numeros
+        median array_num
         ; == == == == == == == == ==
 
     JMP main_init_while
@@ -631,4 +709,261 @@ print_array_16 MACRO array,size_
     JNE cycle_show        
 
     POP si
+ENDM 
+; ==================================== PROMEDIO =====================================
+; Calcula el promedio de una lista de valores
+; @param array: array list of number
+; @param size: size of the array (tamaño real)
+average MACRO array,size_
+    LOCAL cycle_while 
+    PUSHER_ALL
+    CLEAN_RECORDS_ALL
+    MOV result,0d
+    cycle_while:
+        MOV ax, array[si]       ; ax = array[x]
+        ADD ax,result           ; ax = ax + result
+
+        MOV result,ax           ; result = ax 
+        ADD si,2 
+        CMP si,size_ 
+    JNE cycle_while 
+    POPPER_ALL
+    division_decimal result,flag_2
+ENDM
+; ==================================== DIVISIÓN =====================================
+; Calcula la división de valores con decimales  10 / 3 = 3.3333
+; @param dividendo: Numero el cual se desea dividir
+; @param divisor: Numero por el cual se va dividir
+division_decimal MACRO dividendo,divisor
+    LOCAL while_
+    PUSHER
+    CLEAN_RECORDS
+    MOV ax,dividendo        ; ax = 10
+    MOV bx,divisor          ; bx = 3
+    DIV bx                  ; ax = ax / bx
+
+    MOV entero,0d           ; Limpiar variables
+    MOV decimal,0d          ; Limpiar variables
+    MOV entero,ax           ; entero = ax
+
+    while_:
+        MOV ax,dx           ; ax = residuo
+        XOR dx,dx
+        PUSH bx             ; Guardar el numero 
+        MOV bx,10
+        MUL bx
+        POP bx              ; Sacar el numero 
+
+        XOR dx,dx
+        DIV bx              ; residuo = residuo * 10
+
+        PUSH ax
+        PUSH dx
+        PUSH bx
+
+        XOR dx,dx
+        MOV ax,decimal
+        MOV bx,10
+        MUL bx
+        MOV decimal,ax
+
+        POP bx
+        POP dx
+        POP ax
+
+        ADD decimal,ax 
+        INC cx
+        CMP cx,4
+    JNZ while_  
+     
+    POPPER
+    print_ msg_opcion
+    PRINT_16 entero
+    print_ dot 
+    PRINT_16 decimal
+ENDM
+
+; ==================================== ORDENAMIENTO =====================================
+; Ordenamiento Burbuja ascendente
+; @param array: arreglo a ordenar  
+bubble_sort MACRO array
+    LOCAL cycle_i,cycle_j,exit_i,exit_j,continue_j
+    PUSHER
+    CLEAN_RECORDS
+
+    MOV b_i,0
+    MOV b_j,0
+    MOV ax,flag
+    MOV b_size,ax 
+    MOV ax,b_size
+    cycle_i:
+        ; == == IF (i < SIZE) == ==
+        MOV ax,b_i                  ; ax = i
+        CMP ax,b_size               ; if
+        JGE exit_i                  ; if (i >= size) ->> Salirse 
+        ; == == == == == == == == =
+        cycle_j:
+            ; == == IF (J < SIZE - I) == ==
+            MOV ax,b_size                  ; ax = size
+            SUB ax,2d                       ; ax = size - 1
+            CMP b_j,ax                      ; if
+            JGE exit_j                      ; if (j >= size - i) ->> Salir
+            ; == == == == == == == == == ==
+            ; == == IF (ARRAY[J ] > ARRAY[J +1 ]) == ==
+            ;b_aux = array[k +1]
+            ;b_temp = array[k]
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,array[bx]                            ; ax = array[j]
+            MOV b_temp,ax                               ; temp = array[j]
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,array[bx]                            ; ax = array[j+1]
+            MOV b_aux,ax                                ; aux = array[j+1]
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            SUB ax,2                                    ; ax = ax - 2
+            MOV b_j,ax                                  ; j = j - 2
+
+            MOV ax,b_temp                               ; ax = array[j]
+            CMP ax,b_aux                                ; if
+            JLE continue_j                              ; if (array[j] < array[j + 1]) ->> Continuar
+
+            ; == == == == == == == == == == == == == ==
+            ; == == == == == CAMBIO DE VALORES == == ==
+            ;b_aux = array[k +1]
+            ;b_temp = array[k]
+            XOR ax,ax 
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,b_aux                                ; ax = aux(array[j + 1])
+            MOV array[bx],ax                            ; array[j] = array[j + 1]
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,b_temp                               ; ax = aux(array[j])
+            MOV array[bx],ax                            ; array[j+1] = array[j]
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            SUB ax,2                                    ; ax = ax - 2
+            MOV b_j,ax                                  ; j = j - 2
+            ; == == == == == == == == == == == == == ==
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+        JMP cycle_j 
+    JMP cycle_i 
+
+    continue_j:
+        XOR ax,ax
+        MOV ax,b_j      ; ax = j
+        ADD ax,2        ; ax = ax + 2
+        MOV b_j,ax      ; j = j + 2
+    JMP cycle_j
+    exit_j:
+        XOR ax,ax
+        MOV ax,b_i      ; ax = i
+        ADD ax,2        ; ax = ax + 2
+        MOV b_i,ax      ; i = i + 2
+        
+        MOV b_j,0d      ; j = 0 
+    JMP cycle_i 
+    exit_i:
+        POPPER
+ENDM 
+; ==================================== MEDIANA =====================================
+; CALCULA LA MEDIANA DEL ARREGLO
+; @param array: arreglo   de numeros
+median MACRO array
+    LOCAL par_number, impar_number,impar_cycle,exit_median,par_cycle,continue_par,exit_par
+    ;bubble_sort array_num                    ; ordemiento burbuja 
+    PUSHER_ALL
+    CLEAN_RECORDS_ALL
+    MOV b_i,0d
+    MOV b_j,0d
+    MOV b_aux,0d
+    MOV b_temp,0d
+
+    MOV ax,flag_2                           ; ax = contador
+    MOV bx,2d                               ; bx = 2
+    DIV bx                                  ; ax = ax / 2
+
+    CMP dx,0000h                            ; if
+    JE par_number                           ; if (dx == 000) ->> es par
+
+    JMP impar_number                        ; impar
+
+    par_number:
+        MOV b_temp,ax                      ; liminte superior
+        SUB ax,1                           ; ax = ax + 1
+        MOV b_aux,ax                       ; limite inferiro
+    JMP par_cycle 
+
+    par_cycle:
+        CMP cx,b_aux                        ; if
+        JL continue_par                     ; if (cx < aux) ->> continuar
+
+        CMP cx,b_temp                       ; if
+        JG exit_par                         ; if (cx > temp) ->> salir
+
+        XOR ax,ax
+        MOV ax,array[si]                    ; ax = array[si]
+        ADD ax,b_i                          ; ax = ax + i
+        MOV b_i,ax                          ; i = ax
+        
+        INC cx
+        ADD si,2                            ; si = si + 2 
+    JMP par_cycle
+
+    continue_par:
+        INC cx
+        ADD si,2                            ; si = si + 2 
+    JMP par_cycle
+    impar_number:
+        ADD ax,1
+        MOV b_j,ax
+    JMP impar_cycle
+    impar_cycle:
+        XOR bx,bx
+        MOV bx,array[si]    ; bx = array[si]
+        MOV b_i,bx          ; i = array[si]
+
+        INC cx              ; cx = cx + 1
+        ADD si,2            ; si = si + 2
+
+        CMP b_j,cx           ; if
+        JE exit_median      ; if (cx == ax(parte entera))
+    JMP impar_cycle
+    
+    exit_par:
+        POPPER_ALL
+        division_decimal b_i,2d
+    JMP main_init_while
+
+    exit_median:
+        POPPER_ALL
+        print_ msg_opcion
+        PRINT_16 b_i
 ENDM 
