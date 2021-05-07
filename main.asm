@@ -39,6 +39,17 @@ include macros.asm
   b_j dw 0d                     ; var j para el ordenamiento
   b_aux dw 0d                   ; aux = array[k +1]
   b_temp dw 0d                  ; temp = array[k]
+  b_aux_f dw 0d                 ; aux_f = array[k +1]
+  b_temp_f dw 0d                ; temp_f = array[k]
+  
+  tflag dw 0
+  tfrecuencia dw 1200 dup(0)
+  tnum dw 1200 dup(0)           ; guarda numero actual para aumentar su frecuencia
+  ;array_frecuencia              ; gurada la frecuencia sin numeros duplicados
+  width_bar dw 0d               ; Ancho de la barra
+  high_bar dw 0d                ; Alto de barra
+  width_bar_init dw 0d          ; Ancho inicial de la barra
+  width_bar_end dw 0d           ; Ancho final de la barra
   ; == == == VARIABLES TO PAINT == == == == 
   axis_y dw 0d                  ; Valor de inicio de la y para pintar el eje y 
   axis_x dw 0d                  ; Valor de inicio de la x para pintar el eje x
@@ -47,6 +58,12 @@ include macros.asm
   index_column db 0             ; posición del char en la columna para pintar la letra
   ; == == == == == == == == == == == ==  ==
   curr_letter db 0              ; letra actual del interprete
+  str_num_2 db 2d dup("$")
+  str_num_3 db 3d dup("$")
+  scale_result dw 0d            ; Guarda la escala para pintar las palabras
+
+  cursor_row db 0
+  cursor_column db 0
 ; ----------------------------------------------- SEGMENTO DE CODIGO ----------------------------------------------
 .code
 
@@ -86,8 +103,8 @@ PAINT_AXIS PROC
   ;INT 21h
 
   ; == == == PAINT AXIS == == ==
-  paint_axis_y 35d,450d,32d,4d
-  paint_axis_x 32d,600d,450d,4d
+  paint_axis_y 35d,432d,32d,4d
+  paint_axis_x 32d,600d,430d,4d
   ; == == == == == == == == == =
   RET 
 PAINT_AXIS ENDP
@@ -98,3 +115,12 @@ end
   ;int_to_string buffer_num
   ;print_ buffer_num
   ; == == == =  = == == ==
+
+    ; CALL INIT_VIDEO           ; Iniciar el modo de video
+  ; mov ax,numb_tempp
+  ; int_to_string str_num_2
+  ; paint_word_vertical str_num_2,8d,27d,14d
+  ; paint_bar 38d,88d,100d,431d,9d
+  ; CALL PAINT_AXIS
+  ; MOV ah,01h      ; NO BOTAR EL PROGRAMA
+  ; INT 21h

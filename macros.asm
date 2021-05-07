@@ -291,7 +291,9 @@ cursor_position MACRO row,column
     
     CLEAN_RECORDS
 
-    ; MOV AX,COLUMN
+    ; XOR ax,ax
+    ; MOV al,row
+    ; MOV cursor_row,al
 
     MOV ah,02h      ; ah = 02h
     MOV bh,0        ; bh = Pagina de video
@@ -327,6 +329,44 @@ paint_word MACRO string,row,column,color
         JE exit_while   ; if (si == 4) ->> EXIT
         ; == == CURSOR POSITION == == 
         cursor_position row,index_column
+        ; == == == == == == == == == =
+        ; == == CHAR PAINT == == == ==
+        paint_char string[si],color
+        ; == == == == == == == == == =
+        inc si  
+        inc index_column
+    jmp cycle 
+    exit_while:
+        POP ax
+        POP si 
+
+ENDM
+
+; ==================================== PAINT WORD ==============================
+; Position the cursor where you want to print the chara
+; @param string: word you want to paint
+; @param column: column the cursor
+; @param row: row the cursor
+; @param color: color the word
+paint_word_vertical MACRO string,row,column,color
+    LOCAL cycle,exit_while
+    PUSH si
+    PUSH ax 
+    XOR si,si
+    XOR ax,ax
+
+    MOV index_column,0      ; index_column = 0
+    MOV ax,column           ; ax = 20
+    MOV index_column,al     ; index_column = 20 
+
+    XOR ax,ax
+    MOV ax,SIZEOF string
+
+    cycle:
+        CMP si,ax      ; if
+        JE exit_while   ; if (si == 4) ->> EXIT
+        ; == == CURSOR POSITION == == 
+        cursor_position index_column,row
         ; == == == == == == == == == =
         ; == == CHAR PAINT == == == ==
         paint_char string[si],color
@@ -378,21 +418,35 @@ ENDM
 ; @param color: color of the line
 paint_bar MACRO left,right,up,down,color
     LOCAL while_1,while_2
+    PUSHER
+    CLEAN_RECORDS
+
     MOV bar_x,0d
     MOV bar_y,0d
 
-    MOV bar_x,left              ; Inicia en algun lugar de la izquierda 
+    MOV ax,left
+    MOV bar_x,ax              ; Inicia en algun lugar de la izquierda 
     while_1:
-        MOV bar_y,up            ; Inicia en algun lugar de arriba 
+        XOR ax,ax 
+        MOV ax,up
+        MOV bar_y,ax            ; Inicia en algun lugar de arriba 
         while_2:
             paint_pixel bar_y,bar_x,color 
             INC bar_y 
-            CMP bar_y,down      ; Termina en algun lugar de abajo
+
+            XOR ax,ax
+            MOV ax,down
+            CMP bar_y,ax        ; Termina en algun lugar de abajo
         JNZ while_2             ; if (y != down) ->> Saltar a while 2
 
         INC bar_x
-        CMP bar_x,right         ; if : Termina en algun lugar de la derecha
+
+        XOR ax,ax
+        MOV ax,right
+        CMP bar_x,ax            ; if : Termina en algun lugar de la derecha
     JNE while_1                 ; if (x != right) ->> saltar while 1
+
+    POPPER
 ENDM 
 ; ===================================== LEER ARCHIVO ====================================
 ; Open file 
@@ -635,8 +689,10 @@ inteprete MACRO string
         get_number_list buffer_file              ; guarda en el arreglo "number_list"
         set_number_array number_list             ; recorre el arreglo de string de numeros "10 20 30" y los almacena en arreglo numerico (number_array)
         bubble_sort array_num                    ; ordemiento burbuja 
-        print_array_16 array_num, flag           ; imprime el listado de nuemeros del arreglo de numeros
-        median array_num
+        ;print_array_16 array_num, flag           ; imprime el listado de nuemeros del arreglo de numeros
+        ;median array_num
+        ;execute_moda
+        paint_graph_asc
         ; == == == == == == == == ==
 
     JMP main_init_while
@@ -966,4 +1022,425 @@ median MACRO array
         POPPER_ALL
         print_ msg_opcion
         PRINT_16 b_i
+ENDM 
+; ====================================== FRECUENCIA ====================================
+table macro array 
+    LOCAL fin, formar, esigual, primer_ciclo, cambio
+    PUSHER_ALL
+    CLEAN_RECORDS
+    xor si,si ;puntero de arreglo de numeros 
+    xor di,di ;punter de arreglo para tabla
+
+    primer_ciclo: 
+        mov ax, array[si]
+        mov tnum[di], ax ; tnum[0] = primer numero en la lista
+        
+        ;mov num_actual, ax
+
+        mov tfrecuencia[di], 1
+
+        inc si 
+        inc si 
+    formar:
+        cmp si, flag 
+        je fin
+        
+        mov ax, array[si] ; actual es igual al anterior ya guradado
+        cmp tnum[di], ax 
+        je esigual
+
+        jmp cambio
+    esigual:
+        mov ax,tfrecuencia[di]
+        add ax, 1
+        mov tfrecuencia[di], ax 
+        inc si 
+        inc si 
+        jmp formar
+    cambio:
+        inc di
+        inc di
+
+        mov tflag, di ; guardando cuando datos han ingresado        
+
+        mov ax, array[si]
+        mov tnum[di], ax
+
+        mov tfrecuencia[di], 1 ; frecuencia = 1
+
+        inc si 
+        inc si 
+        jmp formar
+    fin: 
+        add tflag, 2 
+        POPPER_ALL 
+endm
+; ====================================== ORDEMAMINETO ====================================
+; @param array : array de frecuencias 
+; @param array_n : array normal  
+bb_arrays MACRO array,array_n
+    LOCAL cycle_i,cycle_j,exit_i,exit_j,continue_j
+    PUSHER
+    CLEAN_RECORDS
+
+    MOV b_i,0
+    MOV b_j,0
+    MOV ax,tflag
+    MOV b_size,ax 
+    MOV ax,b_size
+    cycle_i:
+        ; == == IF (i < SIZE) == ==
+        MOV ax,b_i                  ; ax = i
+        CMP ax,b_size               ; if
+        JGE exit_i                  ; if (i >= size) ->> Salirse 
+        ; == == == == == == == == =
+        cycle_j:
+            ; == == IF (J < SIZE - I) == ==
+            MOV ax,b_size                  ; ax = size
+            SUB ax,2d                       ; ax = size - 1
+            CMP b_j,ax                      ; if
+            JGE exit_j                      ; if (j >= size - i) ->> Salir
+            ; == == == == == == == == == ==
+            ; == == IF (ARRAY[J ] > ARRAY[J +1 ]) == ==
+            ;b_aux    = array[k +1]
+            ;b_temp   = array[k]
+            ;b_aux_f  = array[k +1]
+            ;b_temp_f = array[k]
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,array[bx]                            ; ax = array[j]
+            MOV b_temp,ax                               ; temp = array[j]
+
+            ;== == == ARRAY_N == == ==
+            XOR ax,ax
+            MOV ax,array_n[bx]                          ; ax = array[j]
+            MOV b_temp_f,ax                             ; temp = array[j]
+            ;== == == == == == == == =
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,array[bx]                            ; ax = array[j+1]
+            MOV b_aux,ax                                ; aux = array[j+1]
+
+            ;== == == ARRAY_N == == ==
+            XOR ax,ax
+            MOV ax,array_n[bx]                          ; ax = array[j +1]
+            MOV b_aux_f,ax                              ; temp = array[j + 1]
+            ;== == == == == == == == =
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            SUB ax,2                                    ; ax = ax - 2
+            MOV b_j,ax                                  ; j = j - 2
+
+            MOV ax,b_temp                               ; ax = array[j]
+            CMP ax,b_aux                                ; if
+            JLE continue_j                              ; if (array[j] < array[j + 1]) ->> Continuar
+
+            ; == == == == == == == == == == == == == ==
+            ; == == == == == CAMBIO DE VALORES == == ==
+            ;b_aux = array[k +1]
+            ;b_temp = array[k]
+            ;b_aux_f  = array[k +1]
+            ;b_temp_f = array[k]
+            XOR ax,ax 
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,b_aux                                ; ax = aux(array[j + 1])
+            MOV array[bx],ax                            ; array[j] = array[j + 1]
+
+            ;== == == ARRAY_N == == ==
+            XOR ax,ax
+            MOV ax,b_aux_f                              ; ax = aux(array[j + 1])
+            MOV array_n[bx],ax                          ; array[j] = array[j + 1]
+            ;== == == == == == == == =
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+            XOR ax,ax
+            XOR bx,bx
+
+            MOV bx,b_j                                  ; bx = j
+            MOV ax,b_temp                               ; ax = aux(array[j])
+            MOV array[bx],ax                            ; array[j+1] = array[j]
+
+            ;== == == ARRAY_N == == ==
+            XOR ax,ax
+            MOV ax,b_temp_f                             ; ax = aux(array[j])
+            MOV array_n[bx],ax                          ; array[j+1] = array[j]
+            ;== == == == == == == == =
+
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            SUB ax,2                                    ; ax = ax - 2
+            MOV b_j,ax                                  ; j = j - 2
+            ; == == == == == == == == == == == == == ==
+            XOR ax,ax
+            MOV ax,b_j                                  ; ax = j
+            ADD ax,2                                    ; ax = ax + 2
+            MOV b_j,ax                                  ; j = j + 2
+
+        JMP cycle_j 
+    JMP cycle_i 
+
+    continue_j:
+        XOR ax,ax
+        MOV ax,b_j      ; ax = j
+        ADD ax,2        ; ax = ax + 2
+        MOV b_j,ax      ; j = j + 2
+    JMP cycle_j
+    exit_j:
+        XOR ax,ax
+        MOV ax,b_i      ; ax = i
+        ADD ax,2        ; ax = ax + 2
+        MOV b_i,ax      ; i = i + 2
+        
+        MOV b_j,0d      ; j = 0 
+    JMP cycle_i 
+    exit_i:
+        POPPER
+ENDM
+; ====================================== EJECUTAR MODA ====================================
+execute_moda MACRO 
+    PUSH BX
+    PUSH AX
+
+    XOR AX,AX                           ; limpiar variables 
+    XOR BX,BX                           ; limpiar variables
+
+    MOV b_i,0d                          ; limpiar variables
+
+    table array_num                     ; calcula la frecuencia y lo guarda en el arreglo "tfrecuencia"
+    bb_arrays tfrecuencia,tnum          ; Ordena los arreglos para que cabal cuadren en el mismo orden 
+
+    ; print_ msg_opcion   
+    ; print_array_16 tnum, tflag        ; imprime el listado de nuemeros del arreglo de numeros
+
+    MOV bx,tflag                        ; bx = contador
+    SUB bx,2                            ; bx = bx - 2 
+    MOV ax,tnum[bx]                     ; ax = array[bx]
+    MOV b_i,ax                          ; i = ax
+    
+    print_ msg_opcion
+    PRINT_16 b_i
+
+    POP AX
+    POP BX
+ENDM 
+; ====================================== pintar barras ====================================
+; @param array : array de frecuencias 
+; @param array_n : array de numeros-frecuencia
+; width_bar                        ; Ancho de la barra
+; high_bar                         ; Alto de barra
+;array,array_n
+paint_graph_asc MACRO 
+    LOCAL first_cycle,exit_cycle__ ,paint_init,paint_other
+    PUSHER_ALL
+    CLEAN_RECORDS_ALL
+
+    clean_screen
+    table array_num                     ; calcula la frecuencia y lo guarda en el arreglo "tfrecuencia"
+    bb_arrays tfrecuencia,tnum          ; Ordena los arreglos para que cabal cuadren en el mismo orden 
+
+    MOV b_aux,0d        
+    MOV b_temp,0d                       ; variable auxialar para calcular altura
+    CALL INIT_VIDEO
+    CALL PAINT_AXIS
+
+    ; == == == CALCULAR ANCHO-MAX BARRA == ==
+    MOV ax,560d                         ; Ancho de maximo de la pantalla
+    MOV bx,12                       ; 12 barras en total
+    DIV bx                              ; ax = ax/bx ->> ax = 560/12
+    SUB ax,5d                           ; ax = ax - 5
+    MOV width_bar,ax                    ; ancho = ax
+    ; == == == == == == == == == == == == ==
+
+    first_cycle:
+        CMP si,24
+        JE exit_cycle__
+        CMP si,0d
+        JE paint_init
+    JMP paint_other
+
+    paint_init:
+        ; == == == ANCHO INCIAL == == ==
+        XOR ax,ax 
+        XOR bx,bx
+        XOR cx,cx 
+        MOV width_bar_init,38d          ; anchoInicial = 38d
+        MOV ax,width_bar                ; ax = anchoBarra
+        ADD ax,width_bar_init           ; ax = ax + anchoInicial
+        MOV width_bar_end,ax            ; anchoFinal = ax
+        ; == == == == == == == == ==  == 
+        ; == == == ALTURA INCIAL == == ==
+        XOR ax,ax
+        XOR dx,dx 
+        
+        MOV ax,tfrecuencia[si]          ; ax = frecuencia[i]
+        MOV high_bar,ax                 ; alto = ax
+        MOV b_temp,ax                   ; temp = frecuencia[i]
+
+        MOV ax,high_bar                 ; ax = altura
+        MOV bx,329d                     ; bx = 329
+        MUL bx                          ; ax = ax * bx -<< 329 * altura
+        MOV high_bar,ax                 ; altura = ax
+
+        MOV ax,high_bar                 ; ax = altura
+        MOV bx,100d                     ; bx = 100d ->> cambiar
+        DIV bx                          ; ax = altura/100 -<< (329 * altura) / 100d
+        MOV high_bar,ax                 ; altura = ax 
+
+        MOV ax,429d                     ; ax = 429
+        SUB ax,high_bar                 ; ax = ax - altura
+        MOV high_bar,ax                 ; altura = ax
+        ; == == == == == == == == == == =
+        ; paint_bar width_bar_init,width_bar_end,100d,429d,9d
+        paint_bar width_bar_init,width_bar_end,high_bar,429d,9d         ; PINTAR BARRA
+        ; == == == PINTAR PALABRA == == ==
+        XOR ax,ax
+        MOV b_aux,0d                            ; aux = 0
+        MOV ax,tnum[si]                         ; ax = array[i]
+        MOV b_aux,ax                            ; aux = ax
+        graph_word_vertical b_aux,width_bar_end
+        ADD si,2
+        ; == == == == == == == == == == ==
+    JMP first_cycle
+
+    paint_other:
+        ; == == == ANCHO OTROS == == ==
+        XOR ax,ax 
+        XOR bx,bx
+        XOR cx,cx 
+        MOV ax,width_bar_end            ; ax = anchoFinal
+        ADD ax,5d                       ; ax = ax + 5
+        MOV width_bar_init,ax           ; anchoInicial = ax
+
+        MOV ax,width_bar_init           ; ax = anchoInicial
+        ADD ax,width_bar                ; ax = ax + anchoBarra
+        MOV width_bar_end,ax            ; anchoFinal = ax
+        ; == == == == == == == == ==  ==
+        ; == == == ALTURA INCIAL == == ==
+        XOR ax,ax
+        XOR dx,dx 
+        
+        MOV ax,tfrecuencia[si]          ; ax = frecuencia[i]
+        MOV high_bar,ax                 ; alto = ax
+        MOV b_temp,ax                   ; temp = frecuencia[i]
+
+        MOV ax,high_bar                 ; ax = altura
+        MOV bx,329d                     ; bx = 329
+        MUL bx                          ; ax = ax * bx -<< 329 * altura
+        MOV high_bar,ax                 ; altura = ax
+
+        MOV ax,high_bar                 ; ax = altura
+        MOV bx,100d                     ; bx = 100d ->> cambiar
+        DIV bx                          ; ax = altura/100 -<< (329 * altura) / 100d
+        MOV high_bar,ax                 ; altura = ax 
+
+        MOV ax,429d                     ; ax = 429
+        SUB ax,high_bar                 ; ax = ax - altura
+        MOV high_bar,ax                 ; altura = ax
+        ; == == == == == == == == == == =
+        paint_bar width_bar_init,width_bar_end,high_bar,429d,9d 
+        ; == == == PINTAR PALABRA == == ==
+        XOR ax,ax
+        MOV b_aux,0d                            ; aux = 0
+        MOV ax,tnum[si]                         ; ax = array[i]
+        MOV b_aux,ax                            ; aux = ax
+        graph_word_vertical b_aux,width_bar_end
+        ADD si,2
+        ; == == == == == == == == == == ==
+    JMP first_cycle
+
+
+    exit_cycle__:
+        POPPER_ALL
+        pause_
+        MOV ah,01h      ; NO BOTAR EL PROGRAMA
+        INT 21h
+ENDM 
+; ====================================== PAIN WORD GRAPH ====================================
+; @param num: numbero a imprimir
+; @param bar_end: posición donde termina la barra
+graph_word_vertical MACRO number,bar_end
+    LOCAL verify_num,two_digits,exit_verify,three_digits 
+    PUSHER
+    CLEAN_RECORDS
+
+    clean_str str_num_3
+    MOV ax,number
+    int_to_string str_num_3
+
+    XOR ax,ax
+    MOV scale_result,0d
+    MOV ax,bar_end          ; AX = finBarra
+    MOV bx,73d              ; bx = 73 ->> columna donde termina el apuntador para pintar la palabra
+    MUL bx                  ; ax = finBarra * 73
+    MOV scale_result,ax     ; escala = ax
+
+    MOV bx,598d             ; ax = 598 ->> columna donde termina el espacio para pintar la barra
+    MOV ax,scale_result     ; ax = escala
+    DIV bx                  ; ax = ax / bx
+    SUB ax,2d               ; ax = ax - 2
+    MOV scale_result,ax     ; scala = ax
+
+    verify_num:
+        CMP number,99       ; if
+        JLE two_digits      ; if (number <= 99) ->> salta si es menor que 99
+
+        CMP number,100
+        JGE three_digits
+       
+    JMP three_digits      
+
+    two_digits:
+        clean_str str_num_2
+        XOR ax,ax 
+        mov ax,number
+        int_to_string str_num_2
+
+        xor ax,ax
+        mov ax,scale_result
+        mov cursor_column,al
+        paint_word_vertical str_num_2,cursor_column,27d,15d
+    JMP exit_verify 
+
+    three_digits:
+        ; == == TRES DIGITOS == ==
+        xor ax,ax
+        mov ax,scale_result
+        mov cursor_column,al
+        paint_word_vertical str_num_3,cursor_column,27d,15d
+        ; == == == == == == == == =
+    JMP exit_verify    
+
+    exit_verify:
+        POPPER
+ENDM
+
+
+; ====================================== FRECUENCIA-SIN DUPLICADOS ====================================
+; GUARDA EN NUEVO ARREGLO LA FRECUENCIA SIN DATOS DUPLICADOS
+; @param array : array de frecuencias 
+frecuencia MACRO array
+    LOCAL exit_cycle,struct,is_equal,first_cycle
+    PUSHER_ALL
+    CLEAN_RECORDS
+
+    first_cycle:
+
+
 ENDM 
