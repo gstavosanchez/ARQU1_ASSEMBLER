@@ -50,6 +50,7 @@ include macros.asm
   high_bar dw 0d                ; Alto de barra
   width_bar_init dw 0d          ; Ancho inicial de la barra
   width_bar_end dw 0d           ; Ancho final de la barra
+  bigger_num dw 0d              ; numero mas grande 
   ; == == == VARIABLES TO PAINT == == == == 
   axis_y dw 0d                  ; Valor de inicio de la y para pintar el eje y 
   axis_x dw 0d                  ; Valor de inicio de la x para pintar el eje x
@@ -64,6 +65,7 @@ include macros.asm
 
   cursor_row db 0
   cursor_column db 0
+  cero_ db '00'
 ; ----------------------------------------------- SEGMENTO DE CODIGO ----------------------------------------------
 .code
 
@@ -103,7 +105,7 @@ PAINT_AXIS PROC
   ;INT 21h
 
   ; == == == PAINT AXIS == == ==
-  paint_axis_y 35d,432d,32d,4d
+  paint_axis_y 40d,430d,32d,4d
   paint_axis_x 32d,600d,430d,4d
   ; == == == == == == == == == =
   RET 

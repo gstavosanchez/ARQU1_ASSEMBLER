@@ -1254,7 +1254,8 @@ paint_graph_asc MACRO
     clean_screen
     table array_num                     ; calcula la frecuencia y lo guarda en el arreglo "tfrecuencia"
     bb_arrays tfrecuencia,tnum          ; Ordena los arreglos para que cabal cuadren en el mismo orden 
-
+    get_big_number tfrecuencia
+    
     MOV b_aux,0d        
     MOV b_temp,0d                       ; variable auxialar para calcular altura
     CALL INIT_VIDEO
@@ -1269,7 +1270,7 @@ paint_graph_asc MACRO
     ; == == == == == == == == == == == == ==
 
     first_cycle:
-        CMP si,24
+        CMP si,tflag
         JE exit_cycle__
         CMP si,0d
         JE paint_init
@@ -1294,13 +1295,14 @@ paint_graph_asc MACRO
         MOV b_temp,ax                   ; temp = frecuencia[i]
 
         MOV ax,high_bar                 ; ax = altura
-        MOV bx,329d                     ; bx = 329
-        MUL bx                          ; ax = ax * bx -<< 329 * altura
+        MOV bx,389d                     ; bx = 389
+        MUL bx                          ; ax = ax * bx -<< 389 * altura
         MOV high_bar,ax                 ; altura = ax
 
         MOV ax,high_bar                 ; ax = altura
-        MOV bx,100d                     ; bx = 100d ->> cambiar
-        DIV bx                          ; ax = altura/100 -<< (329 * altura) / 100d
+        ; MOV bx,100d                     ; bx = 100d ->> cambiar
+        MOV bx,bigger_num               ; bx = 100d ->> cambiar -<<
+        DIV bx                          ; ax = altura/100 -<< (389 * altura) / 100d
         MOV high_bar,ax                 ; altura = ax 
 
         MOV ax,429d                     ; ax = 429
@@ -1341,13 +1343,14 @@ paint_graph_asc MACRO
         MOV b_temp,ax                   ; temp = frecuencia[i]
 
         MOV ax,high_bar                 ; ax = altura
-        MOV bx,329d                     ; bx = 329
-        MUL bx                          ; ax = ax * bx -<< 329 * altura
+        MOV bx,389d                     ; bx = 389
+        MUL bx                          ; ax = ax * bx -<< 389 * altura
         MOV high_bar,ax                 ; altura = ax
 
         MOV ax,high_bar                 ; ax = altura
-        MOV bx,100d                     ; bx = 100d ->> cambiar
-        DIV bx                          ; ax = altura/100 -<< (329 * altura) / 100d
+        ; MOV bx,100d                   ; bx = 100d ->> cambiar
+        MOV bx,bigger_num               ; bx = 100d ->> cambiar -<<
+        DIV bx                          ; ax = altura/100 -<< (389 * altura) / 100d
         MOV high_bar,ax                 ; altura = ax 
 
         MOV ax,429d                     ; ax = 429
@@ -1368,6 +1371,7 @@ paint_graph_asc MACRO
 
     exit_cycle__:
         POPPER_ALL
+        paint_scale_word
         pause_
         MOV ah,01h      ; NO BOTAR EL PROGRAMA
         INT 21h
@@ -1383,6 +1387,8 @@ graph_word_vertical MACRO number,bar_end
     clean_str str_num_3
     MOV ax,number
     int_to_string str_num_3
+
+    MOV cursor_column,0
 
     XOR ax,ax
     MOV scale_result,0d
@@ -1432,15 +1438,95 @@ graph_word_vertical MACRO number,bar_end
 ENDM
 
 
-; ====================================== FRECUENCIA-SIN DUPLICADOS ====================================
-; GUARDA EN NUEVO ARREGLO LA FRECUENCIA SIN DATOS DUPLICADOS
+; ====================================== NUMERO MAS GRANDE ====================================
+; GUARDA EN BIGGER_NUMBER  el numero mas grande del array 
 ; @param array : array de frecuencias 
-frecuencia MACRO array
-    LOCAL exit_cycle,struct,is_equal,first_cycle
-    PUSHER_ALL
+get_big_number MACRO array
+    PUSH bx
+    XOR bx,bx
+
+    MOV bigger_num,0d
+    MOV bx,tflag                        ; bx = contador
+    SUB bx,2                            ; bx = bx - 2 
+    MOV ax,array[bx]                     ; ax = array[bx]
+    MOV bigger_num,ax                    ; i = ax
+
+    POP bx
+ENDM
+
+paint_scale_word MACRO 
+    LOCAL first_while_,exit_f_while,is_cero_,is_more
+    PUSHER
     CLEAN_RECORDS
 
-    first_cycle:
 
+    MOV cursor_row,0
+    MOV b_aux,0d
 
+    MOV cx,0000d
+    first_while_:
+        CMP cx,bigger_num           ; if
+        JG exit_f_while             ; if  (cx > 2) ->> salir
+
+        CMP cx,0d                   ; if
+        JE is_cero_                  ; if (cx == 0) ->> saltar
+    JMP is_more                      
+
+    is_cero_:
+        ;clean_str str_num_2             ; limpiar variable str
+        ;XOR ax,ax 
+        ;mov ax,0d                       ; ax = 0 
+        ;int_to_string str_num_2         ; volver a string el numero
+        paint_word cero_,26d,1d,15d
+        INC cx
+    JMP first_while_
+
+    is_more:
+        clean_str str_num_2             ; limpiar variable str
+        XOR ax,ax 
+        MOV ax,cx                       ; ax = cx 
+        MOV b_aux,ax
+        int_to_string str_num_2         ; volver a string el numero
+        get_scale b_aux                 ; generar la escala
+
+        xor ax,ax
+        mov ax,scale_result             ; ax = escala
+        mov cursor_row,al               ; row = al
+        paint_word str_num_2,cursor_row,1d,15d
+
+        INC cx
+    JMP first_while_
+
+    exit_f_while:
+        POPPER
+ENDM 
+; == == == Get escala == == == 
+; guarda la escala en la variable scale_result
+; @param number : numero para la escala
+get_scale MACRO number
+    PUSHER
+    CLEAN_RECORDS
+
+    MOV scale_result,0d
+    
+    ; == == == ALTURA INCIAL == == ==
+    XOR ax,ax
+    XOR dx,dx 
+    
+    MOV ax,number                   ; ax = numero
+    MOV bx,24d                      ; bx = 24
+    MUL bx                          ; ax = ax * bx -<< 24 * numero
+    MOV scale_result,ax             ; escala = ax
+
+    MOV ax,scale_result             ; ax = escala
+    MOV bx,bigger_num               ; bx = numMax ->> cambiar -<<
+    DIV bx                          ; ax = ax/bx -<< (24 * numero) / numMax
+    MOV scale_result,ax             ; escala = ax 
+
+    MOV ax,26d                      ; ax = 26
+    SUB ax,scale_result             ; ax = ax - escala
+    MOV scale_result,ax             ; altura = ax
+    ; == == == == == == == == == == =
+
+    POPPER
 ENDM 
